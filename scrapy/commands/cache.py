@@ -25,6 +25,18 @@ class Command(ScrapyCommand):
         parser.add_option("-l", "--list", dest="list", action="store_true",
                           help="List entries in cache")
 
+   def retrieve_responses(self, spidername, cache):
+        """Returns list of cached responses belonging to a spider"""
+        spider_root_path = os.path.join(cache.cachedir, spidername)
+        responses = []
+        for (dirpath, dirnames, filenames) in os.walk(spider_root_path, topdown=True):
+            if len(filenames) > 0:
+                response = cache.retrieve_response_by_path(dirpath)
+                response.fingerprint = os.path.basename(os.path.normpath(dirpath))  # last folder's name = fingeprint
+                response.spidername = spidername
+                responses += [response]
+        return responses
+
     def run(self, args, opts):
         settings = self.crawler_process.settings
         settings_dict = settings._to_dict()
