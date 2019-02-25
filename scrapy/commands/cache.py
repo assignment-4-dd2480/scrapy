@@ -52,17 +52,19 @@ class Command(ScrapyCommand):
     def run(self, args, opts):
         settings = self.crawler_process.settings
         settings_dict = settings._to_dict()
+
         if not settings_dict['HTTPCACHE_ENABLED']:
             raise UsageError("The Http-cache is disabled in settings")
+
+        mw = HttpCacheMiddleware(settings, None)
+        cache = mw.storage
+        if not os.path.exists(cache.cachedir):
+            print('The Http-cache is currently empty')
+        elif opts.list:  # --list option specified
+            cached_responses = []
+            spider_names = os.listdir(cache.cachedir)  # Cache keeps a dir for each spider
+            for spider_name in spider_names:
+                cached_responses += self.retrieve_responses(spider_name, cache)
+            self.print_cached_responses(cached_responses)
         else:
-            mw = HttpCacheMiddleware(settings, None)  # TODO: unclear what 2nd arg 'stats' is for
-            cache = mw.storage
-            if os.path.exists(cache.cachedir) and len(os.listdir(cache.cachedir)) > 0:
-                print('Cache entries found:')
-                # os.walk() yields two lists for each directory it visits - files and dirs.
-                for (dirpath, dirnames, filenames) in os.walk(cache.cachedir):
-                    if len(filenames) > 0:
-                        for filename in filenames:
-                            print(f'{dirpath}/{filename}')
-            else:
-                print('The Http-cache is currently empty')
+            raise UsageError()  # require option to be specified e.g '--list'
