@@ -49,7 +49,7 @@ class Command(ScrapyCommand):
                 f"|{'{:^60}'.format(str(cache_entry))}|"
             )
 
-    def process_list_option(args, cache):
+    def process_list_option(self, args, cache):
         """Determine how cache entries should be listed by examining
            the argument (if any) passed to --list option"""
         spider_names = os.listdir(cache.cachedir)  # Cache keeps a dir for each spider
@@ -77,6 +77,6 @@ class Command(ScrapyCommand):
         if not os.path.exists(cache.cachedir):
             print('The Http-cache is currently empty')
         elif opts.list:
-            process_list_option(args, cache, spider_names)
+            self.process_list_option(args, cache)
         else:
             raise UsageError()  # Require option to be specified e.g '--list'
