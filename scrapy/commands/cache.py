@@ -15,7 +15,7 @@ class Command(ScrapyCommand):
     default_settings = {'LOG_ENABLED': False}
 
     def syntax(self):
-        return "[options]"
+        return "[options] [<spidername>]"
 
     def short_desc(self):
         return "Get information about cached requests/responses"
@@ -23,7 +23,7 @@ class Command(ScrapyCommand):
     def add_options(self, parser):
         ScrapyCommand.add_options(self, parser)
         parser.add_option("-l", "--list", dest="list", action="store_true",
-                          help="List entries in cache")
+                          help="List entries in cache. If spidername provided entries of that spider are listed")
 
     def retrieve_responses(self, spidername, cache):
         """Returns list of cached responses belonging to a spider"""
@@ -49,6 +49,22 @@ class Command(ScrapyCommand):
                 f"|{'{:^60}'.format(str(cache_entry))}|"
             )
 
+    def process_list_option(args, cache):
+        """Determine how cache entries should be listed by examining
+           the argument (if any) passed to --list option"""
+        spider_names = os.listdir(cache.cachedir)  # Cache keeps a dir for each spider
+        if len(args) > 0:
+            if args[0] in spider_names:  # 'scrapy cache --list spidername'
+                cached_responses = self.retrieve_responses(args[0], cache)
+                self.print_cached_responses(cached_responses)
+            else:
+                raise UsageError("The provided spidername doesn't exist")
+        else:
+            cached_responses = []
+            for spider_name in spider_names:
+                cached_responses += self.retrieve_responses(spider_name, cache)
+            self.print_cached_responses(cached_responses)
+
     def run(self, args, opts):
         settings = self.crawler_process.settings
         settings_dict = settings._to_dict()
@@ -60,16 +76,7 @@ class Command(ScrapyCommand):
         cache = mw.storage
         if not os.path.exists(cache.cachedir):
             print('The Http-cache is currently empty')
-            return
-
-        cached_responses = []
-        spider_names = os.listdir(cache.cachedir)  # Cache keeps a dir for each spider
-        if opts.list and len(args) > 0 and args[0] in spider_names:   # 'scrapy cache --list spidername'
-            cached_responses = self.retrieve_responses(args[0], cache)
-            self.print_cached_responses(cached_responses)
-        elif opts.list:                     # 'scrapy cache --list'
-            for spider_name in spider_names:
-                cached_responses += self.retrieve_responses(spider_name, cache)
-            self.print_cached_responses(cached_responses)
+        elif opts.list:
+            process_list_option(args, cache, spider_names)
         else:
-            raise UsageError()  # require option to be specified e.g '--list'
+            raise UsageError()  # Require option to be specified e.g '--list'
