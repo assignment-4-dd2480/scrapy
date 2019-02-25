@@ -37,6 +37,18 @@ class Command(ScrapyCommand):
                 responses += [response]
         return responses
 
+    def print_cached_responses(self, cached_responses):
+        """Format table of cache entries for console"""
+        header = f"|{'{:-^15}'.format(f' Spider name ')}|{'{:-^32}'.format(f' Timestamp ')}|{'{:-^42}'.format(f' Fingerprint ')}|{'{:-^60}'.format(f' Response summary ')}|"
+        print(header)
+        for cache_entry in cached_responses:
+            print(
+                f"|{'{:^15}'.format(cache_entry.spidername)}"
+                f"|{'{:^32}'.format(cache_entry.headers[b'Date'].decode())}"
+                f"|{'{:^42}'.format(cache_entry.fingerprint)}"
+                f"|{'{:^60}'.format(str(cache_entry))}|"
+            )
+
     def run(self, args, opts):
         settings = self.crawler_process.settings
         settings_dict = settings._to_dict()
