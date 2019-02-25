@@ -25,7 +25,7 @@ class Command(ScrapyCommand):
         parser.add_option("-l", "--list", dest="list", action="store_true",
                           help="List entries in cache")
 
-   def retrieve_responses(self, spidername, cache):
+    def retrieve_responses(self, spidername, cache):
         """Returns list of cached responses belonging to a spider"""
         spider_root_path = os.path.join(cache.cachedir, spidername)
         responses = []
@@ -60,9 +60,14 @@ class Command(ScrapyCommand):
         cache = mw.storage
         if not os.path.exists(cache.cachedir):
             print('The Http-cache is currently empty')
-        elif opts.list:  # --list option specified
-            cached_responses = []
-            spider_names = os.listdir(cache.cachedir)  # Cache keeps a dir for each spider
+            return
+
+        cached_responses = []
+        spider_names = os.listdir(cache.cachedir)  # Cache keeps a dir for each spider
+        if opts.list and len(args) > 0 and args[0] in spider_names:   # 'scrapy cache --list spidername'
+            cached_responses = self.retrieve_responses(args[0], cache)
+            self.print_cached_responses(cached_responses)
+        elif opts.list:                     # 'scrapy cache --list'
             for spider_name in spider_names:
                 cached_responses += self.retrieve_responses(spider_name, cache)
             self.print_cached_responses(cached_responses)
