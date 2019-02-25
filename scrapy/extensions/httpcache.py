@@ -286,10 +286,13 @@ class FilesystemCacheStorage(object):
 
     def retrieve_response(self, spider, request):
         """Return response if present in cache, or None otherwise."""
-        metadata = self._read_meta(spider, request)
+        rpath = self._get_request_path(spider, request)
+        return self.retrieve_response_by_path(rpath)
+
+    def retrieve_response_by_path(self, rpath):
+        metadata = self._read_meta(rpath)
         if metadata is None:
             return  # not cached
-        rpath = self._get_request_path(spider, request)
         with self._open(os.path.join(rpath, 'response_body'), 'rb') as f:
             body = f.read()
         with self._open(os.path.join(rpath, 'response_headers'), 'rb') as f:
@@ -330,8 +333,7 @@ class FilesystemCacheStorage(object):
         key = request_fingerprint(request)
         return os.path.join(self.cachedir, spider.name, key[0:2], key)
 
-    def _read_meta(self, spider, request):
-        rpath = self._get_request_path(spider, request)
+    def _read_meta(self, rpath):
         metapath = os.path.join(rpath, 'pickled_meta')
         if not os.path.exists(metapath):
             return  # not found
