@@ -1,25 +1,22 @@
-import os
 from twisted.trial import unittest
 from twisted.internet import defer
-import scrapy
-import sys
-from scrapy.utils.testsite import SiteTest
 from scrapy.utils.testproc import ProcessTest
-import test_downloadermiddleware_httpcache
+from scrapy.utils.test import get_testenv
+from tests import mock
+from scrapy.settings import default_settings
 
 
+class CacheTest(ProcessTest, unittest.TestCase):
 
-
-class CacheTest(ProcessTest, SiteTest, unittest.TestCase, _BaseTest):
-    
     command = 'cache'
-    self.storage_class = 'scrapy.extensions.httpcache.FileSystemCacheStorage'
-    
-    #will not work if cache is actually empty
+
     @defer.inlineCallbacks
-    def test_cacheNotEmpty(self):
-        _,out,_ = yield self.execute(['--list'])
-        self.assertEqual(b'The Http-cache is currently empty\n', out)
+    @mock.patch('scrapy.settings.default_settings', default_settings)
+    def test_list_empty_cache(self):
+
+        default_settings.HTTPCACHE_ENABLED = True
+        _, _, err = yield self.execute(['--list'], check_code=False)
+        self.assertTrue(b'The Http-cache is currently empty\n', err)
 
     '''
     Non-working tests
