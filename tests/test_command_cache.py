@@ -24,6 +24,12 @@ class CacheTest(ProcessTest, unittest.TestCase):
         _, _, err = yield self.execute(['--list'], check_code=False)
         self.assertTrue(b'The Http-cache is currently empty\n', err)
 
+    @defer.inlineCallbacks
+    @mock.patch('scrapy.settings.default_settings', default_settings)
+    def test_list_cache_non_existing_spider(self):
+        default_settings.HTTPCACHE_ENABLED = True
+        _, _, err = yield self.execute(['--list', 'testspider'], check_code=False)
+        self.assertTrue(b"The provided spider name doesn't exist\n", err)
     '''
     Non-working tests
     
