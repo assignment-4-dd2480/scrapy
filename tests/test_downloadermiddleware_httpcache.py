@@ -6,6 +6,7 @@ import unittest
 import email.utils
 from contextlib import contextmanager
 import pytest
+import leveldb
 
 from scrapy.http import Response, HtmlResponse, Request
 from scrapy.spiders import Spider
@@ -117,6 +118,8 @@ class DefaultStorageTest(_BaseTest):
             time.sleep(2)  # wait for cache to expire
             assert storage.retrieve_response(self.spider, request2) is None
 
+
+
     def test_storage_never_expire(self):
         with self._storage(HTTPCACHE_EXPIRATION_SECS=0) as storage:
             assert storage.retrieve_response(self.spider, self.request) is None
@@ -147,6 +150,24 @@ class DbmStorageWithCustomDbmModuleTest(DbmStorageTest):
 class FilesystemStorageTest(DefaultStorageTest):
 
     storage_class = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
+    def test_retrieve_response_by_path(self):
+        with self._storage() as storage:
+            request2 = self.request.copy()
+            path = storage._get_request_path(self.spider, self.request)
+            assert 'example.com/81/818492beabce92630298c5cc9d88fbe69a26be47' in path
+            storage.store_response(self.spider, self.request, self.response)
+            response2 = storage.retrieve_response_by_path(path)
+            assert isinstance(response2, HtmlResponse)  # content-type header
+            self.assertEqualResponse(self.response, response2)
+
+            time.sleep(2)  # wait for cache to expire
+            assert storage.retrieve_response_by_path(path) is None
+
+    def test_retrieve_response_by_path_not_exist(self):
+        with self._storage() as storage:
+            path = storage.retrieve_response_by_path("this/should/not/exist")
+            self.assertIsNone(path)
+
 
 class FilesystemStorageGzipTest(FilesystemStorageTest):
 
