@@ -12,8 +12,14 @@ class CacheTest(ProcessTest, unittest.TestCase):
 
     @defer.inlineCallbacks
     @mock.patch('scrapy.settings.default_settings', default_settings)
-    def test_list_empty_cache(self):
+    def test_list_disabled_cache(self):
+        default_settings.HTTPCACHE_ENABLED = False
+        _, _, err = yield self.execute(['--list'], check_code=False)
+        self.assertTrue(b'The Http-cache is disabled in settings\n', err)
 
+    @defer.inlineCallbacks
+    @mock.patch('scrapy.settings.default_settings', default_settings)
+    def test_list_empty_cache(self):
         default_settings.HTTPCACHE_ENABLED = True
         _, _, err = yield self.execute(['--list'], check_code=False)
         self.assertTrue(b'The Http-cache is currently empty\n', err)
