@@ -53,17 +53,24 @@ class Command(ScrapyCommand):
         """Determine how cache entries should be listed by examining
            the argument (if any) passed to --list option"""
         spider_names = os.listdir(cache.cachedir)  # Cache keeps a dir for each spider
-        if len(args) > 0:
+        if len(args) == 1:
             if args[0] in spider_names:  # 'scrapy cache --list spidername'
                 cached_responses = self.retrieve_responses(args[0], cache)
                 self.print_cached_responses(cached_responses)
             else:
-                raise UsageError("The provided spidername doesn't exist")
-        else:
+                raise UsageError("The provided spider name doesn't exist")
+        elif len(args) == 0:
             cached_responses = []
             for spider_name in spider_names:
                 cached_responses += self.retrieve_responses(spider_name, cache)
             self.print_cached_responses(cached_responses)
+        else:
+            cached_responses = []
+            for arg in args:
+                if arg in spider_names:
+                    cached_responses += self.retrieve_responses(arg, cache)
+            self.print_cached_responses(cached_responses)
+
 
     def run(self, args, opts):
         settings = self.crawler_process.settings
