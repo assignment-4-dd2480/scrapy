@@ -17,18 +17,8 @@ class CacheTest(ProcessTest, SiteTest, unittest.TestCase, _BaseTest):
     @defer.inlineCallbacks
     def test_cacheNotEmpty(self):
         _,out,_ = yield self.execute(['--list'])
-        self.assertNotEqual(b'The Http-cache is currently empty\n', out)
+        self.assertEqual(b'The Http-cache is currently empty\n', out)
 
-    
-    @defer.inlineCallbacks
-    def test_new_command(self):
-        self.command = 'version'
-        encoding = getattr(sys.stdout, 'encoding') or 'utf-8'
-        _, out, _ = yield self.execute([])
-        self.assertEqual(
-            out.strip().decode(encoding),
-            "Scrapy %s" % scrapy.__version__,
-        )
 
     @defer.inlineCallbacks
     def test_create_remove(self):
