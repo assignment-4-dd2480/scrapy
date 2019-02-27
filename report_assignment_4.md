@@ -41,13 +41,6 @@ this:
 
 9. The process repeats (from step 1) until there are no more requests from the `Scheduler`
 
-### HttpCacheMiddleware 
-Our refactoring concerns Scrapy’s `HttpCacheMiddleware` component.
-The `HttpCacheMiddleware` is a type of `Downloader Middleware` (depicted in the diagram above as purple rectangles between `Engine` and `Downloader`).
-
-The`HttpCacheMiddleware` component provides a low-level cache for HTTP requests and responses. If enabled, the cache stores every request and its corresponding response. It is configured by choosing one of multiple db-backends and also a cache policy (see [docs](https://docs.scrapy.org/en/latest/topics/downloader-middleware.html?highlight=filesystemcachestorage#module-scrapy.downloadermiddlewares.httpcache)). 
-
-For the scope of this assignment, we've decided to focus on the default db-backend, namely the file system storage backend. If we have time left after refactoring it, we will look at refactoring the other db-backend solutions.
 
 ## Selected issue
 
@@ -55,7 +48,13 @@ Title: provide a way to work with scrapy http cache without making requests
 
 URL: https://github.com/scrapy/scrapy/issues/2365
 
-The issue creator requests a way to retrieve all caches and selected caches from command line. Currently, that is not implemented in the Scrapy tool.
+Our refactoring concerns Scrapy’s `HttpCacheMiddleware` class.
+The `HttpCacheMiddleware` is a type of `Downloader Middleware` (depicted in the architecture diagram above as purple rectangles between `Engine` and `Downloader`).
+The http cache (if enabled) is used in steps 4-6 in the data flow description described above (section **Architectural overview**). First the request sent by a spider is stored, and later the corresponding response is stored in the "cache" as well.
+
+The`HttpCacheMiddleware` component provides a low-level cache for HTTP requests and responses. If enabled, the cache stores every request and its corresponding response. It is configured by choosing one of multiple db-backends and also a cache policy (see [docs](https://docs.scrapy.org/en/latest/topics/downloader-middleware.html?highlight=filesystemcachestorage#module-scrapy.downloadermiddlewares.httpcache)). 
+
+For the scope of this assignment, we've decided to focus on the default db-backend, namely the file system storage backend (implemented in the class `FilesystemCacheStorage`). If we have time left after refactoring it, we will look at refactoring the other db-backend solutions.
 
 ## Onboarding experience
 
@@ -416,7 +415,11 @@ _The refactoring itself is documented by the git log._
 
 **Before**: Test log of master branch before our edits: https://travis-ci.org/scrapy/scrapy/jobs/496023267
 
-**After**: The build fails, but not due to the tests we added, there are no probelms with  `test_downloadermiddleware_httpcache.py` and `test_command_cache.py`. Test log of master branch after our edits:
+**After**: The build fails, but not due to the tests we added, there are no probelms with  `test_downloadermiddleware_httpcache.py` and `test_command_cache.py`. Specifically, there are two tests methods that fail in the test suite `tests/test_crawl.py`, although we haven't edited this file. This could be due to flaky tests written by previous developers, or an unforseen side-effect introduced by our new code/tests. Our suspicion is that the failing tests methods in `tests/test_crawl.py` fail due to simulated delays (in the test-cases) which causes inconsistent runtime behavior.
+
+Another issue we've had is that Scrapy is built for 9 different versions of Python. This has slowed down the Travis build-time during development. Futhermore, our edits pass for some versions of Python and fail for others.
+
+Test log of master branch after our edits:
 https://travis-ci.com/assignment-4-dd2480/scrapy/jobs/180675331
 
 The build however passes for Python 3.6:
@@ -471,7 +474,9 @@ Refactoring and relating requirements to tests.
 Jacob & Antonello learned about Python `**args` and `**kwargs`.
 
 #### **Is there something special you want to mention here?**
-Having students search for open refactoring issues on open source projects was a bad call, and should be changed for the next year. It was time-consuming, unrewarding and bothersome. It does not reflect work-life in the least.
+Having students search for open refactoring issues on open source projects was a bad call, and should be changed for the next year. The search for such a specific issue was time-consuming, unrewarding and bothersome.
+
+Perhaps an alternative solution could be for the teachers to select a few open source projects that are well suited for this assignment. Then each student group can choose one of these, and refactor it in a private repo. That way, the TA:s will be well acquainted with the projects before examination, and the students can focus more on refactoring and less on finding a suitable issue.
 
 From Wikipedia: 
 > "Code refactoring is the process of restructuring existing computer code **without changing** its external behavior." 
